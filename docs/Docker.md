@@ -501,144 +501,33 @@ latest: digest: sha256:efebf0f7aee69450f99deafe11121afa720abed733943e50581a9dc75
 
 
 
+以上介绍了一些 Docker 的存储方式，那我们可以来看看这些存储方式的最佳的应用场景：
 
+## Volumes使用场景
+- 多个容器共享数据，你无需手动创建挂载的内容，Docker 将会按照你的配置自动创建挂载关系。即使容器停止、删除，挂载的数据仍存在，如果需要删除挂载的内容，你可以指定命令删除(docker volume rm)
 
+- 如果当 Docker 主机没有给定目录或者文件结构时，Volumes 可将 Docker 主机的配置和容器运行时进行解耦
 
+- 让你想讲数据存储在云供应商时，可选择 Volumes 模式
 
+- 当你准备备份、恢复、或者迁移数据到其他机器时，volumes 可能是很好的选择，你只要停止容器，然后进入到指定目录（Docker 存储区: `/var/lib/docker/volumes/<volume-name>`)即可访问得到
 
+- 当你的程序运行在 Docker Desktop（图形化界面管理 Docker 的工具），且需要高性能I/O时，Volumes 通常存储数据是在Linux 虚拟机中，而不是宿主机上，这保证了低延迟和高吞吐的读写
 
+- 让你的程序运行在 Docker Desktop 中且希望保持文件系统的原始的特性时。例如：数据库引擎需要精确地控制磁盘的刷新来确保事务的持久性
 
+## Bind mounts使用场景
+- 从宿主机共享配置文件到容器内。在默认情况下，这也是 Docker 提供 DNS 解决方案到容器内的方式，实际是将宿主机的`/etc/resolv.conf`挂载进去容器中
 
+- 在宿主机和容器之间共享源码或者构建包（如 Java程序 打包后的 jar 包）。举个例子：我们可以将Maven中的`target/`目录挂载进容器，然后每次在宿主机打包（build)时，容器只要获取到读写权限，即可获取到 Maven 的构建包。
+如果你是倾向于 Docker 的开发模式（在Docker容器运行服务），那你在定义 Dockerfile的时候，直接把预生产的构建包拷贝到镜像中，则不用依赖于Bind mounts了。
 
+- 当文件、目录结构在宿主机、容器中需要保持一致时，如，宿主机、容器，myConfig 文件都放置于`/home/soft/conf`目录下。
 
+<br/>
 
+&emsp;&emsp;对比以上的使用场景，我们可以知道，Volumes 和 Bind mounts 有相似之处，都可以理解为宿主机与容器间的数据共享，却又不尽相同（使用场景），那么我们在决策时，应该有什么依据呢？
 
+- 当你挂载一个空的 volume 进入到容器中已存在的文件或者目录时，容器内的文件、目录，将会`复制`到这个空的 volume 中；同理，如果你运行一个容器并定义一个不存在的 volume 时，容器将会自动创建，这对于一些具备初始化数据的容器非常有用，依赖于该容器的其他容器，则可以很方便的共享到这些数据
 
-
-
-
-
-# Docker网络通信
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## Docker常用命令
-
-查看正在运行的容器
-
-docker ps
-
-
-
-查看服务器上所有容器
-
-docker ps -a
-
-
-
-后台运行容器
-
-docker run -d 容器
-
-
-
-```shell
-docker run -d -p 8080:8080  --name jenkins -it f7a9278ee82a
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-# yum使用
-
-
-
-查看镜像仓库：
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-##  环境变量
-
-https://blog.csdn.net/xingzuo_1840/article/details/122195280
-
-
-
-## 常用命令
-
-获得容器ip
-
-```shell
-docker inspect -f ``'{{.Name}} - {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'` `$(docker ps -aq)
-```
-
-
-
-获得容器列表
-
-docker container ls
-
-
-
-进入容器bash
-
-docker exec -it 容器id /bin/bash
-
-
-
-
-
-## 常见问题
-
-无法读取文件
-
-saas-seata  | Error: Unable to access jarfile /home/aj/seata/fastjar/seata-server.jar
-
-> 
-
+- 当你挂载一个 bind mounts 或非空 volume进入到容器已存在的文件、目录中，这些文件、目录将会被`mount`的机制所隐藏；
