@@ -42,4 +42,105 @@ Volumes 是 Docker 容器中良好的存储数据的机制。相对于 bind moun
 
        
 
+### 创建和管理volumes
+
+   与 bind mount 不同的是，你可以在容器管理区域外，直接创建 volumes
+
+我们尝试创建一个 volume:
+
+```shell
+[root@localhost ~]# docker volume create my-vol
+```
+（备注：`#`符号是Linux命令自带的，在输入时，请不要加入哦）
+
+查看创建的 volume:
+```shell
+[root@localhost ~]# docker volume ls
+
+local     my-vol
+```
+
+检查 volume:
+```shell
+[root@localhost ~]# docker volume inspect my-vol
+
+[
+    {
+        "CreatedAt": "2023-11-22T16:21:27+08:00",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/my-vol/_data",
+        "Name": "my-vol",
+        "Options": null,
+        "Scope": "local"
+    }
+]
+
+```
+
+删除一个 volume:
+```shell
+[root@localhost ~]# docker volume rm my-vol
+my-vol
+```
+
+### 带 volume 启动容器
+
+如果你启动容器时 volume 不存在，Docker 会为您自动创建。我们启动一个`nginx`来体验下：
+
+```shell
+[root@localhost ~]# docker run -d \
+> --name devtest \
+> --mount source=myvol2,target=/add \
+> nginx:latest
+beb26e026cda87cba28da416ac8357b3aff42b547f6939b6d84cef9d3694fea8
+```
+(备注: 在命令行结尾输入`\`后按回车键，命令光标会自动换行，可继续输入)
+
+我们来检查（docker inspect）下容器的情况：
+
+```shell
+[root@localhost ~]# docker inspect devtest
+"Mounts": [
+   {
+         "Type": "volume",
+         "Name": "myvol2",
+         "Source": "/var/lib/docker/volumes/myvol2/_data",
+         "Destination": "/add",
+         "Driver": "local",
+         "Mode": "z",
+         "RW": true,
+         "Propagation": ""
+   }
+]
+```
+容器信息比较多，我们目前只要关注`Mount`的信息即可，从以上信息，我们可以得知挂载类型为`volume`，挂载的 Source（来源）和 Destination（目标），`RW`为`true` 表示容器具备读写权限。
+
+我们尝试停止并删除容器：
+```shell
+[root@localhost ~]# docker container stop devtest
+
+[root@localhost ~]# docker container rm devtest
+
+[root@localhost ~]# docker volume ls
+local     myvol2
+```
+我们也验证了，即使删除了容器，volume 仍然存在，除非主动删除。
+
+### 在 Docker Compose 中使用 volume
+(待写完docker-compose后补充)
+
+### 在不同机器中共享数据
+
+当我们在部署具备容错机制的应用时，我们一般会配置多台从机（主从架构）来读取一个相同的文件。
+
+![20240201085556](https://cdn.jsdelivr.net/gh/Github-Stephen/blogPic/springboot/20240201085556.png)
+<center>引用自Docker官网</center>
+
+
+从上图可以看到，每台机器(node)部署了一些从服务（service-replica），运行在docker上，共享着相同的数据。
+
+我们有多种方式达成**多个机器共享数据**的方式，如：
+- 直接在应用程序中加入逻辑，存储数据到云对象存储如 Amazon S3 或者 minio等；
+- 创建一个带驱动程序(driver)的 volume, 以此来支持读写外部文件如 [NFS](https://linux.vbird.org/linux_server/centos6/0330nfs.php#What_NFS_NFS) 或 Amazon S3；
 
