@@ -144,3 +144,38 @@ local     myvol2
 - 直接在应用程序中加入逻辑，存储数据到云对象存储如 Amazon S3 或者 minio等；
 - 创建一个带驱动程序(driver)的 volume, 以此来支持读写外部文件如 [NFS](https://linux.vbird.org/linux_server/centos6/0330nfs.php#What_NFS_NFS) 或 Amazon S3；
 
+Volume Driver 具备抽象性，也就是你无需关心底层存储如何运作，只需关心存储的（业务）逻辑即可。
+
+### 使用 volume driver
+（进阶用法，后续介绍）
+
+
+### 备份、恢复、迁移数据
+我们可以使用`--volumes-from`来创建一个绑定具体 volume 的容器，
+
+#### 备份
+我们启动一个新的容器：
+
+(docker run -v启动失败问题：https://www.cnblogs.com/yangcl-blogs/p/10559839.html)
+
+
+
+
+### 删除 volumes
+
+我们知道 Docker 中的 volume，是不会随着容器删除而丢失的，对于 具名 Volume 和匿名 volume ，我们需要考虑：
+
+- 具名 volume 在容器外，有一个指定的来源（docker 管理区域中的文件路径），如： myvol:/container_vol
+
+- 匿名 volume 没有指定的来源，我们可以在删除容器时，**显示地**告知容器删除 volume 如：
+
+`docker run --rm -v /foo -v new_vol:/bar ubuntu /bin/bash`）
+
+以上命令，是启动容器时，删除容器里面的`foo`，并自动删除 Docker 引擎管理的对应的匿名 volume，同时新增一个挂载 `new_vol:/bar` 
+
+### 删除所有 volume
+`docker volume prune`
+
+
+
+
