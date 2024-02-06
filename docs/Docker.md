@@ -9,10 +9,8 @@ outline: deep
 
 ## 架构图
 
-
-
-
-
+![20240204094557](https://cdn.jsdelivr.net/gh/Github-Stephen/blogPic/springboot/20240204094557.png)
+<center>引用自Dokcer官网</center>
 
 
 
