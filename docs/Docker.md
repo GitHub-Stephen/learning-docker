@@ -2,46 +2,56 @@
 outline: deep
 ---
 
+## Docker 概述
+
+Docker 是一个服务于开发、装载、运行应用的开源平台。 当您在 Docker 平台上开发应用程序，您无需关注基础设施（存储、网络等），因此可提升您交付应用的效率。当然，您也可以像管理应用程序的方式来管理基础设施（简单上手）。通过 Docker 的运作模式来 构建、测试、开发应用，能显式地提升从开发到部署生产的效率。
+
+### Docker 平台
+
+&emsp;&emsp;Docker 提供了一个松耦合、独立的环境，用于打包、构建您的应用程序。在该环境下，您可以在宿主机（运行Docker的机器）上同时运行多个容器。这些轻量级的容器，包含了您运行程序所需的一切内容（存储、网络、权限等），您无需再考虑在宿主机上安装的软件。您还可以共享您的容器，每个（获取您容器）的人，在运行容器时，都（跟您一样）是相同的运作模式。
 
 
 
-# 架构与功能模块
+## 架构与功能模块
 
-## 架构图
+### 架构
+
+&emsp;Docker 是经典的CS(client-server)架构。Docker client(客户端)会与 Docker daemon 产生交互，以此来构建、运行、或者发布您的容器。 Docker client 和 Docker daemon 可以运行在一台主机上，Docker client 也可以与远程主机上的 Docker daemon 进行交互。 Docker client 是通过诸如 RestAPI、 UNIX socket 或者其他网络接口与 Docker daemon 进行交互。另外还有一个客户端称为 `Docker Compose`，它可以帮助您以多个容器组合起来，作为一个应用程序来运行（通常叫做“容器编排”）。
+
 
 ![20240204094557](https://cdn.jsdelivr.net/gh/Github-Stephen/blogPic/springboot/20240204094557.png)
 <center>引用自Dokcer官网</center>
 
+#### 服务端
+
+`Docker daemon` ： dockerd， 相当于docker的后台进程。
+
+`Docker Daemon配置文件`：CentosOS 一般默认在/etc/systemd/system/docker.service.d/
+
+PS:Rocky Linux是在lib/systemd/system/ 下
+
+<br/>
 
 
+#### 客户端
 
-## 客户端
+`Docker命令`：交互式命令，如`docker run`
 
-Docker命令
+`DockerAPI` ：可使用 Restful API 操作 Docker
 
-DockerAPI ：可使用restful API操作dockers
+<br/>
 
+#### Docker Desktop
+&emsp;&emsp;是一个可以进行在 Mac、Windows、Linux 系统上的可视化程序。相较于命令行的操作方式，Docker Desktop 会比较容易上手。
+<br/>
 
+#### 镜像仓库
 
-## 服务器
+&emsp;&emsp;镜像存储的地方（我们可以类比 npm 仓库和 maven 仓库），Docker Hub 是公开可访问的镜像仓库，（运行 docker pull时）Docker会默认在该公开的仓库中寻找进行。
 
-Docker daemon ： dockerd， 相当于docker的后台进程。
+&emsp;&emsp;我们可以单独配置自己的（私有）仓库地址，当我们在 `docker pull`、`docker push` 时，Docker 会在私有仓库中寻找或推送仓库。
 
-Docker Daemon配置文件：一般默认在/etc/systemd/system/docker.service.d/
-
-Rocky Linux是在lib/systemd/system/ 下
-
-
-
-## 镜像
-
-> 容器模板
-
-- Docker命令 - docker commit : 打包镜像
-
-- Dockerfile : 描述打包过程的文件，以base image不断堆叠成新的镜像；
-
-## 镜像仓库
+常用仓库如下：
 
 - Docker Hub - 官方仓库
 
@@ -49,23 +59,57 @@ Rocky Linux是在lib/systemd/system/ 下
 
 - Docker私有仓库 - Harbor等
 
+<br/>
+
+#### Docker 对象
+
+&emsp;&emsp;当我们使用命令行进行操作时，实际上我们是对 Docker对象 进行操作，如：镜像、容器、网络、存储、插件等。
+
+<br/>
+
+**镜像（Image）**
+
+&emsp;&emsp;一个镜像，实际是创建容器的一个过程描述（采用什么基座、安装什么软件等过程）。通常，一个镜像又会依赖另外一个镜像，并且带有一些定制化的内容（复制文件、安装软件等操作）。 例如： 我们需要启动一个容器，容器是基于 `ubuntu` 操作系统，同时需要安装 nginx 软件，并且需要做一些 nginx 的配置（端口、访问路径映射等），使 web 程序可以以我们想要的方式运行起来。
+
+&emsp;&emsp;您可以自己制作镜像，或者使用公开仓库中的镜像。在制作镜像过程中，我们会在 `DockerFile` 中编写制作过程。每一步实际上就是在镜像中新建了一层（可以想象成是盖房子的过程）。如果您改变了其中的一个过程，那么重新构建镜像时，只会重新读取改变了的内容。
+
+<br/>
+
+**容器（Container）**
+
+&emsp;&emsp;一个容器是一个可运行的镜像实例。您可以通过命令行**增删查改**容器，也可以将容器连接到多个网络、或者多个存储介质中，甚至在此基础上，再建立一个镜像。
+
+默认情况下，容器之间是相互隔离的，当然我们可以控制这个隔离程度。
+
+容器由镜像和配置组成，当容器被删除时，如果是没有持久化到存储介质的内容，将会丢失。
+
+<br/>
+
+**一个简要的例子**
+
+我们可以在命令行终端执行以下命令（本小节了解即可，后续学习后，可实操）：
+```shell
+ docker run -i -t ubuntu /bin/bash
+```
+
+1. 如果本地仓库（宿主机上的Docker）没有`ubuntu`，那么 Docker 将在您配置的仓库地址中拉取镜像，就跟您手动执行`docker pull ubuntu`一样；
+2. Docker 创建了一个新的容器，就跟您手动执行`docker container create`一样；
+3. Docker 为容器分配一个读写区域，并且作为容器的最顶一层。以便容器中的程序可以在`容器环境`中创建或者修改文件、目录；
+4. Docker 创建一个网络接口来连接容器和`宿主机`的默认网络，因此我们无需对网络做额外配置。这个过程包括分配一个 IP 地址到容器中。默认情况下，容器是可以直接连接到宿主机的网络；
+5. Dokcer 启动容器并执行`/bin/bash`命令，由于启动时采用响应式终端(`-i`和`-t`参数)，此时会进入一个命令行终端界面，以此与容器进行交互；
+6. 当您在命令行输入`exit`去终止`/bin/bash`命令时，容器会停止但不会被删除，您只要重新启动或手动显式地删除它。
 
 
-## 容器
-
-隔离： 通过namespace（pid,net,ipc,mnt,uts)
-
-共享物理资源的同时，容器间又互不影响。
-
-限制：cgroup(cpu,mem,io)
-
-文件系统： UnionFS
+**底层技术**
+&emsp;&emsp;Docker 采用 Go 语言编写，采用了很多 Linux 内核技术。Docker 利用一种名为 `namespace` 的技术来为容器提供隔离环境。当您运行容器时，Docker 实际上也为这些容器创建了一系列的`namespace`。 
 
 
+<br/>
 
-# 环境搭建
 
-## 安装docker
+## 环境搭建
+
+### 安装docker
 
 > 官网方式
 
@@ -218,7 +262,7 @@ Status: Downloaded newer image for hello-world:latest
 
 
 
-## 其他中间件的运行
+### 其他中间件的运行
 
 #### redis
 
@@ -258,12 +302,11 @@ OK
 
 <br/>
 <br/>
+#
 
-# 容器生命周期
+## 容器生命周期
 
 > 增删改查
-
-
 
 - 拉取镜像：
 
