@@ -1,2 +1,2 @@
 # learning-docker
-docker-leraning
+docker-learning
