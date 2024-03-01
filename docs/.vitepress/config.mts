@@ -13,9 +13,11 @@ export default defineConfig({
 
     sidebar: [
       {
-        text: 'Examples',
+        text: 'Docker入门与实战',
         items: [
           { text: '基础知识', link: '/Docker' },
+          { text: '持久化', link: '/Volumes' },
+          { text: '网络', link: '/Networking' },
         ]
       }
     ],

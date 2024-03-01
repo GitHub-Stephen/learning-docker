@@ -135,8 +135,43 @@ docker run --rm -it --network container:redis example/redis-cli -h 127.0.0.1
 
 #### 管理自定义网桥
 
+使用`docker network create` 命令创建一个自定义桥接网络.
+
+```shell
+docker network create my-net
+```
+您可以定义个子网，包含IP地址范围、网关等其他选项。可以参考[docker create network](https://docs.docker.com/reference/cli/docker/network/create/#specify-advanced-options)查看更多参数。
 
 
+我们还可以删除一个网络配置，如果有正在连接的容器，建议先断开容器的网络连接，再进行删除：
+- 断开网络
+```shell
+# docker network disconnect 网络名称 容器名称
+docker network disconnect my-net my-nginx
+```
+- 移除网络配置
+```shell
+docker network rm my-net
+```
+
+
+#### 将容器连接到自定义网络中
+
+当我们创建一个新容器时，我们可以指定一个或多个`flag标识`。下面的例子，是将 Nginx 连接到`my-net`网络。同时还将容器端口8080发布到宿主机的80端口。其他连接到`my-net`网络的容器，也会有权限访问到`my-nginx`的所有端口。
+
+
+```shell
+docker create --name my-nginx \
+  --network my-net \
+  --publish 8080:80 \
+  nginx:latest
+```
+
+想要把一个正在运行的容器连接到已存在的自定义网络中，可以使用`docker network connect`命令。我们可以使用以下命令：
+
+```shell
+docker network connect my-net my-nginx
+```
 
 
 
