@@ -155,6 +155,14 @@ docker network rm my-net
 ```
 
 
+#### 将容器连接到默认桥接网络中
+考虑到历史版本的兼容性，Docker 保留了默认网桥的设置，通常是**不建议**在生产环境使用默认网络（最好使用自定义网络），当然，在学习阶段，我们可以快速熟悉一下即可。
+
+#### 将容器连接到默认网络中
+
+
+
+
 #### 将容器连接到自定义网络中
 
 当我们创建一个新容器时，我们可以指定一个或多个`flag标识`。下面的例子，是将 Nginx 连接到`my-net`网络。同时还将容器端口8080发布到宿主机的80端口。其他连接到`my-net`网络的容器，也会有权限访问到`my-nginx`的所有端口。
@@ -172,6 +180,178 @@ docker create --name my-nginx \
 ```shell
 docker network connect my-net my-nginx
 ```
+
+#### 将容器从自定义网络中断开连接
+
+以下是将容器`my-nginx`从自定义网络`my-net`中移除：
+
+```shell
+docker network disconnect my-net my-nginx
+
+```
+
+
+#### 实操练习
+
+##### 默认网桥网络
+
+接下来的例子，我们可以开启两个相同的容器`alpine`连接一个 Docker 实例，这样可以比较好理解，两个容器间如何进行通信。
+
+1. 在终端工具输入以下命令，列出所有 Docker 网络配置：
+
+```shell
+[root@localhost ~]# docker network ls
+NETWORK ID     NAME      DRIVER    SCOPE
+082ab96f3b60   bridge    bridge    local
+33a72e7f9c62   host      host      local
+007edd1dde08   none      null      local
+```
+以上列出了本服务器 Docker 实例中的网络配置，有不同的 network ID，第一个是默认的桥接(bridge)网络，后面两个是用于容器直接连接 Docker 宿主机(host)的配置，或者容器启动时，处于无网络(none)状态；
+
+2. 运行两个`apline`容器，并利用`ash`（Apline 默认的 shell 工具而不是`bash`）作为终端输入工具。 `-dit`说明容器启动时是以 detached (后台运行)，interactive（可接收输入），还带有一个[TTY](https://www.linusakesson.net/programming/tty/index.php)（可以看到输入和输出）。如果您通过后台运行容器，那么您无法马上（通过 docker exec）连接到容器里，容器ID 会打印出来。由于启动时没有指定`--network`标识，容器将会连接到默认的网桥网络。
+
+```shell
+docker run -dit --name alpine1 alpine ash
+# 本地找不到镜像，从远端拿
+Unable to find image 'alpine:latest' locally
+latest: Pulling from library/alpine
+bca4290a9639: Pull complete 
+Digest: sha256:c5b1261d6d3e43071626931fc004f70149baeba2c8ec672bd4f27761f8e1ad6b
+Status: Downloaded newer image for alpine:latest
+2e76797596d548149cb7ed54ff41ecf957dfcd6cb6cb1ee5d799faa11fb8b3d1
+
+docker run -dit --name alpine2 alpine ash
+```
+
+查看下两个人容器是否正常使用：
+```shell
+docker container ls
+CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS          PORTS     NAMES
+7eb9d16d4327   alpine         "ash"                    21 seconds ago   Up 20 seconds             alpine2
+2e76797596d5   alpine         "ash"                    5 minutes ago    Up 5 minutes              alpine1
+```
+
+3. 查看 brideg 网络查看目前有什么容器正在连接：
+
+```shell
+docker network inspect bridge
+
+[
+    {
+        "Name": "bridge",
+        "Id": "082ab96f3b60587473bb94b73558b974e9fcdbe0072a31e79d7d6690dfa18be8",
+        "Created": "2024-02-03T09:17:14.350730502+08:00",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.17.0.0/16",
+                    "Gateway": "172.17.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {
+            "2e76797596d548149cb7ed54ff41ecf957dfcd6cb6cb1ee5d799faa11fb8b3d1": {
+                "Name": "alpine1",
+                "EndpointID": "07c0b1fc2839cd5266a6af32dc865a889dcb12c650bb8fa9d5df8893df6c08dc",
+                "MacAddress": "02:42:ac:11:00:02",
+                "IPv4Address": "172.17.0.2/16",
+                "IPv6Address": ""
+            },
+            "4f311dfaaaab7a310bfa69199e52c5383826f3a8bbe98b53eb4c8df2a01b9076": {
+                "Name": "devtest",
+                "EndpointID": "6e20c0bfb486dc0b7d1e928fe832238a8e52f9dd2f156cf4054975d144527e19",
+                "MacAddress": "02:42:ac:11:00:05",
+                "IPv4Address": "172.17.0.5/16",
+                "IPv6Address": ""
+            },
+            "603a9a73f2a4d72fc517e3a4741b883b6dd34448b95739741288ffd17f49e7d7": {
+                "Name": "dbstore9",
+                "EndpointID": "5fcca7a90cf6975deb9f85a3f26f25053b3ca68f5ca70d1121c9785b22f15a6b",
+                "MacAddress": "02:42:ac:11:00:03",
+                "IPv4Address": "172.17.0.3/16",
+                "IPv6Address": ""
+            },
+            "7eb9d16d4327bc42d2b5d4aa70dc2a1b50522838c33979e736ea562216c560a0": {
+                "Name": "alpine2",
+                "EndpointID": "0121c38a9cf4a2c7e194f18da22f25c13d0653d7b4fc62e7a5a623f60af72fd0",
+                "MacAddress": "02:42:ac:11:00:04",
+                "IPv4Address": "172.17.0.4/16",
+                "IPv6Address": ""
+            }
+        },
+        "Options": {
+            "com.docker.network.bridge.default_bridge": "true",
+            "com.docker.network.bridge.enable_icc": "true",
+            "com.docker.network.bridge.enable_ip_masquerade": "true",
+            "com.docker.network.bridge.host_binding_ipv4": "0.0.0.0",
+            "com.docker.network.bridge.name": "docker0",
+            "com.docker.network.driver.mtu": "1500"
+        },
+        "Labels": {}
+    }
+]
+
+```
+
+以上 brideg 网络的信息中，包含了宿主机和 bridge 网络的网关地址（`172.17.0.1`）。在`Containers`key下，列出了所有连接的容器，还有容器的在该网络环境下的 IP 地址（`alpine1`的`172.17.0.2`，`alpine2`的`172.17.0.4`）；
+
+4. 容器目前在后台运行，可以使用`docker attach`命令连接`alpine1`：
+```shell
+docker attch apline1
+
+/ #
+```
+
+此时终端工具返回`#`说明您是以 root 用户进入。使用`ip addr show`命令查看`alpine1`的网络接口：
+
+```shell
+/ # ip addr show
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+74: eth0@if75: <BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue state UP 
+    link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.2/16 brd 172.17.255.255 scope global eth0
+       valid_lft forever preferred_lft forever
+```
+
+第一个接口是回路设备，目前我们先忽略。请注意第二个接口 IP 地址为`172.17.0.2`，这跟我们之前用`docker network inspect bridge`查看的一致；
+
+5. 在`alpine1`容器内，我们可以尝试 ping 一下 `baidu.com`，`-c 2`是限制只进行两次 ping 操作：
+
+```shell
+ping -c 2 baidu.com
+
+PING baidu.com (110.242.68.66): 56 data bytes
+64 bytes from 110.242.68.66: seq=0 ttl=127 time=89.888 ms
+64 bytes from 110.242.68.66: seq=1 ttl=127 time=155.875 ms
+
+--- baidu.com ping statistics ---
+2 packets transmitted, 2 packets received, 0% packet loss
+round-trip min/avg/max = 89.888/122.881/155.875 ms
+```
+
+6. 现在我们尝试 ping 第二个容器，我们首先尝试 ping 它的 IP 地址（`172.17.0.4`）：
+```shell
+
+```
+
+
+
+
 
 
 
