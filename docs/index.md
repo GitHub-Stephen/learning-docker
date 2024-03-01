@@ -5,21 +5,8 @@ layout: home
 hero:
   name: "Learning Docker"
   text: "Core Featrue"
-  tagline: My great project tagline
+  tagline: All in Docker
   actions:
     - theme: brand
-      text: Get Started
+      text: 走进容器
       link: /Docker
-    - theme: alt
-      text: API Examples
-      link: /api-examples
-
-features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
----
-
