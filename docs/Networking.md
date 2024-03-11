@@ -346,8 +346,38 @@ round-trip min/avg/max = 89.888/122.881/155.875 ms
 
 6. 现在我们尝试 ping 第二个容器，我们首先尝试 ping 它的 IP 地址（`172.17.0.4`）：
 ```shell
+ping -c 2 172.17.0.4
+PING 172.17.0.4 (172.17.0.4): 56 data bytes
+64 bytes from 172.17.0.4: seq=0 ttl=64 time=0.858 ms
+64 bytes from 172.17.0.4: seq=1 ttl=64 time=0.295 ms
 
+--- 172.17.0.4 ping statistics ---
+2 packets transmitted, 2 packets received, 0% packet loss
+round-trip min/avg/max = 0.295/0.576/0.858 ms
 ```
+
+可以看到，容器`alpine1`可以通过 ping 连接到`alpine2`，但是通过容器名字来连接网络的话，则无法连通：
+
+```shell
+ping -c 2 alpine2
+ping: bad address 'alpine2'
+```
+
+7. 此时我们可以通过组合键 CTRL + p ，（保持按住）CTRL + q，退出容器连接。
+
+8. 退出清理学习现场：
+
+```shell
+docker container stop alpine1 alpine2
+
+docker container rm alpine1 alpine2
+```
+
+**注意：** 不建议在生产环境中使用默认的桥接网络。
+
+
+
+
 
 
 
