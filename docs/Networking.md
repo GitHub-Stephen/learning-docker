@@ -159,7 +159,7 @@ docker network rm my-net
 考虑到历史版本的兼容性，Docker 保留了默认网桥的设置，通常是**不建议**在生产环境使用默认网络（最好使用自定义网络），当然，在学习阶段，我们可以快速熟悉一下即可。
 
 #### 将容器连接到默认网络中
-
+todo。
 
 
 
@@ -187,13 +187,12 @@ docker network connect my-net my-nginx
 
 ```shell
 docker network disconnect my-net my-nginx
-
 ```
 
 
 #### 实操练习
 
-##### 默认网桥网络
+##### 【练习】默认网桥网络
 
 接下来的例子，我们可以开启两个相同的容器`alpine`连接一个 Docker 实例，这样可以比较好理解，两个容器间如何进行通信。
 
@@ -376,12 +375,265 @@ docker container rm alpine1 alpine2
 **注意：** 不建议在生产环境中使用默认的桥接网络。
 
 
+##### 【练习】自定义网桥网络
+
+在这个示例中，我们会启动2个容器，并连接它们到`apline-net`的自定义网络中，不再连接到默认的网桥网络中。 之后我们启动第3个容器，该容器则是连接到默认的网桥（bridge）网络。再启动第4个容器，同时连接`apline-net`自定义网络和默认的网桥网络。
+
+1. 创建一个`alpine-net`网络，我们可以省略`--driver bridge`标识，因为它是默认的：
+
+```shell
+docker network create --driver bridge apline-net
+```
+
+2. 列出 Docker 的网络：
+
+```shell
+[root@localhost ~]# docker network ls
+NETWORK ID     NAME         DRIVER    SCOPE
+47a0e7acc309   alpine-net   bridge    local
+3630282366aa   bridge       bridge    local
+33a72e7f9c62   host         host      local
+9869f9b2281e   jenkins      bridge    local
+9e8fd0cba5f3   my-net       bridge    local
+007edd1dde08   none         null      local
+```
+
+可以查看一下`alpine-net`网络的信息，可以看到 IP 地址且目前没有容器在连接：
+
+```shell
+[root@localhost ~]# docker inspect alpine-net
+[
+    {
+        "Name": "alpine-net",
+        "Id": "47a0e7acc309dd822bb97a0bcd85cb701cf33947d8994553d6103727eb88e30b",
+        "Created": "2024-03-15T08:19:01.268411642+08:00",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.20.0.0/16",
+                    "Gateway": "172.20.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {},
+        "Options": {},
+        "Labels": {}
+    }
+]
+
+```
+
+可以看到网关地址是`172.20.0.1`，而对于网络的网桥网络（名字是bridge的）的网关地址则是`172.17.0.1`。
+
+3. 创建4个容器，我们可以在启动容器时，直接就连接网络，但启动命令目前只支持连接一个网络，所以容器4我们需要启动后，再连接默认的网桥网络（容器4同时连接两个网络）：
+
+```shell
+docker run -dit --name alpine1 --network alpine-net alpine ash
+
+docker run -dit --name alpine2 --network alpine-net alpine ash
+
+docker run -dit --name alpine3 alpine ash
+
+docker run -dit --name alpine4 --network alpine-net alpine ash
+
+docker network connect bridge alpine4
+```
+
+确认下所有容器都在运行着：
+
+```shell
+[root@localhost ~]# docker ps
+CONTAINER ID   IMAGE     COMMAND   CREATED              STATUS              PORTS     NAMES
+38e58c093312   alpine    "ash"     About a minute ago   Up About a minute             alpine4
+36bfc9f52708   alpine    "ash"     About a minute ago   Up About a minute             alpine3
+e495e7e6d36f   alpine    "ash"     2 minutes ago        Up 2 minutes                  alpine2
+efedaf3caf7f   alpine    "ash"     2 minutes ago        Up 2 minutes                  alpine1
+```
+
+4. 观察`bridge`网络和`apline-net`网络：
+
+```shell
+[root@localhost ~]# docker network inspect bridge
+[
+    {
+        "Name": "bridge",
+        "Id": "3630282366aa881ba7bb4a0d5962bd263b0135e41b2f5c0ccf94950b10b86829",
+        "Created": "2024-03-15T08:18:17.820233566+08:00",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.17.0.0/16",
+                    "Gateway": "172.17.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {
+            "36bfc9f52708c6c10b05a690a4d19d5a82a7eafc293dfe724817b5ea5f02034e": {
+                "Name": "alpine3",
+                "EndpointID": "d9e7f39d687c9dfc9809cd09b0e17ba1a445d166adcd06bdbc78620b68003b22",
+                "MacAddress": "02:42:ac:11:00:02",
+                "IPv4Address": "172.17.0.2/16",
+                "IPv6Address": ""
+            },
+            "38e58c093312e7a8c59c5b3b7e6587aedcbc58de733d5778291140b3fbd4fc78": {
+                "Name": "alpine4",
+                "EndpointID": "5509feceaf576209eb3385d01a5dfc15609beeee3e4ffbcc3272acccf02ac410",
+                "MacAddress": "02:42:ac:11:00:03",
+                "IPv4Address": "172.17.0.3/16",
+                "IPv6Address": ""
+            }
+        },
+        "Options": {
+            "com.docker.network.bridge.default_bridge": "true",
+            "com.docker.network.bridge.enable_icc": "true",
+            "com.docker.network.bridge.enable_ip_masquerade": "true",
+            "com.docker.network.bridge.host_binding_ipv4": "0.0.0.0",
+            "com.docker.network.bridge.name": "docker0",
+            "com.docker.network.driver.mtu": "1500"
+        },
+        "Labels": {}
+    }
+]
+
+```
+
+容器`apline3`和`apline4`正在连接着`bridge`网络：
+
+```shell
+[root@localhost ~]# docker network inspect alpine-net
+[
+    {
+        "Name": "alpine-net",
+        "Id": "47a0e7acc309dd822bb97a0bcd85cb701cf33947d8994553d6103727eb88e30b",
+        "Created": "2024-03-15T08:19:01.268411642+08:00",
+        "Scope": "local",s
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.20.0.0/16",
+                    "Gateway": "172.20.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {
+            "38e58c093312e7a8c59c5b3b7e6587aedcbc58de733d5778291140b3fbd4fc78": {
+                "Name": "alpine4",
+                "EndpointID": "819351c5514c1a049a2bbde44520b0aced4bd69b203e211fd2242078d063d1a8",
+                "MacAddress": "02:42:ac:14:00:04",
+                "IPv4Address": "172.20.0.4/16",
+                "IPv6Address": ""
+            },
+            "e495e7e6d36f24b468a53f5ac9d7df2ad96dfeeebdfeddc0ba461a06e6c63890": {
+                "Name": "alpine2",
+                "EndpointID": "89e8902571a66d07c3cddad1d5e799fc6992771fd2dd7ae8ce95da555c6c59d0",
+                "MacAddress": "02:42:ac:14:00:03",
+                "IPv4Address": "172.20.0.3/16",
+                "IPv6Address": ""
+            },
+            "efedaf3caf7fa15cb8f1635d2df4dd5e3847bac67e52318ea220bd7ff53e53a9": {
+                "Name": "alpine1",
+                "EndpointID": "045e8ac7b42f1af82dca0df8ee36c9854a8edc7484b1d6eb8aaa31e543d6d060",
+                "MacAddress": "02:42:ac:14:00:02",
+                "IPv4Address": "172.20.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Options": {},
+        "Labels": {}
+    }
+]
+
+```
+
+可以看到有容器`alpine1`、`alpine2`、`alpine4`连接着`apline-net`网络。
+
+5. 自定义的`apline-net`网络，容器之间通信不单单通过 IP 地址，还可以通过容器名称（转换为 IP 地址）进行通信。这个能力称之为“服务发现”。 我们可以试试让`apline-net`网络下的容器进行互联。
+
+> 注意：
+> 服务发现只能应用于自定义容器的名称，无法应用于 Docker 默认生成的容器名称（类似UUID那种）
 
 
+```shell
+[root@localhost ~]# docker container attach alpine1
+/ # ping -c 2 alpine2
+PING alpine2 (172.20.0.3): 56 data bytes
+64 bytes from 172.20.0.3: seq=0 ttl=64 time=0.470 ms
+64 bytes from 172.20.0.3: seq=1 ttl=64 time=0.396 ms
 
+--- alpine2 ping statistics ---
+2 packets transmitted, 2 packets received, 0% packet loss
+round-trip min/avg/max = 0.396/0.433/0.470 ms
+/ # ping -c 2 alpine4
+PING alpine4 (172.20.0.4): 56 data bytes
+64 bytes from 172.20.0.4: seq=0 ttl=64 time=0.491 ms
+64 bytes from 172.20.0.4: seq=1 ttl=64 time=0.325 ms
 
+--- alpine4 ping statistics ---
+2 packets transmitted, 2 packets received, 0% packet loss
+round-trip min/avg/max = 0.325/0.408/0.491 ms
+/ # ping -c 2 alpine1
+PING alpine1 (172.20.0.2): 56 data bytes
+64 bytes from 172.20.0.2: seq=0 ttl=64 time=0.125 ms
+64 bytes from 172.20.0.2: seq=1 ttl=64 time=0.086 ms
 
+--- alpine1 ping statistics ---
+2 packets transmitted, 2 packets received, 0% packet loss
+round-trip min/avg/max = 0.086/0.105/0.125 ms
+```
 
+6. alpine1 容器无法与 alpine3 通信，因为后者没有连接到`alpine-net`网络中:
+```shell
+/ # ping -c 2 alpine3
+ping: bad address 'alpine3'
+```
+
+通过 IP 地址也是没办法连接到`alpine3`容器，我们可以使用`docker network inspect`查看`bridge`网络中容器`alpine3`的 IP 地址（`172.17.0.2`）
+
+```shell
+/ # ping 172.17.0.2
+PING 172.17.0.2 (172.17.0.2): 56 data bytes
+^C
+--- 172.17.0.2 ping statistics ---
+9 packets transmitted, 0 packets received, 100% packet loss
+```
+数据包100%丢失，无法连接。
+
+退出容器终端，CTRL + p 紧接按 q 。
 
 
 
