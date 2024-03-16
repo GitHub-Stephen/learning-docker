@@ -15,7 +15,7 @@ export default defineConfig({
         text: 'Docker入门与实战',
         items: [
           { text: '基础知识', link: '/Docker' },
-          { text: '持久化', link: '/Volumes' },
+          { text: '持久化', link: '/Persistence' },
           { text: '网络', link: '/Networking' },
         ]
       }

@@ -635,6 +635,79 @@ PING 172.17.0.2 (172.17.0.2): 56 data bytes
 
 退出容器终端，CTRL + p 紧接按 q 。
 
+7. 容器`alpine4`同时连接了`bridge`网络和`alpine-net`网络。它可以连接这两个网络中的其他容器。不过，您连接容器`apline3`时，需要使用 IP 地址
+
+```shell
+docker container attach alpine4
+/ # ping -c 2 alpine1
+PING alpine1 (172.20.0.2): 56 data bytes
+64 bytes from 172.20.0.2: seq=0 ttl=64 time=0.531 ms
+64 bytes from 172.20.0.2: seq=1 ttl=64 time=0.328 ms
+
+--- alpine1 ping statistics ---
+2 packets transmitted, 2 packets received, 0% packet loss
+round-trip min/avg/max = 0.328/0.429/0.531 ms
+
+/ # ping -c 2 alpine2
+PING alpine2 (172.20.0.3): 56 data bytes
+64 bytes from 172.20.0.3: seq=0 ttl=64 time=0.380 ms
+64 bytes from 172.20.0.3: seq=1 ttl=64 time=0.154 ms
+
+--- alpine2 ping statistics ---
+2 packets transmitted, 2 packets received, 0% packet loss
+round-trip min/avg/max = 0.154/0.267/0.380 ms
+
+/ # ping -c 2 alpine3
+ping: bad address 'alpine3'
+
+/ # ping -c 2 172.17.0.2
+PING 172.17.0.2 (172.17.0.2): 56 data bytes
+64 bytes from 172.17.0.2: seq=0 ttl=64 time=0.303 ms
+64 bytes from 172.17.0.2: seq=1 ttl=64 time=0.300 ms
+
+--- 172.17.0.2 ping statistics ---
+2 packets transmitted, 2 packets received, 0% packet loss
+round-trip min/avg/max = 0.300/0.301/0.303 ms
+
+```
+
+8. 最后，确保所有容器，都能连接互联网，如：`baidu.com`.
+
+```shell
+[root@localhost ~]# docker attach alpine4
+
+/ # ping -c 2 baidu.com
+PING baidu.com (110.242.68.66): 56 data bytes
+64 bytes from 110.242.68.66: seq=0 ttl=127 time=46.001 ms
+64 bytes from 110.242.68.66: seq=1 ttl=127 time=50.803 ms
+
+--- baidu.com ping statistics ---
+2 packets transmitted, 2 packets received, 0% packet loss
+round-trip min/avg/max = 46.001/48.402/50.803 ms
+
+# CTRL + p + q 退出终端，连接 alpine3
+[root@localhost ~]# docker attach alpine3
+/ # ping -c 2 baidu.com
+PING baidu.com (39.156.66.10): 56 data bytes
+64 bytes from 39.156.66.10: seq=0 ttl=127 time=62.700 ms
+64 bytes from 39.156.66.10: seq=1 ttl=127 time=49.621 ms
+
+--- baidu.com ping statistics ---
+2 packets transmitted, 2 packets received, 0% packet loss
+round-trip min/avg/max = 49.621/56.160/62.700 ms
+
+# CTRL + p + q 退出终端
+```
+
+9. 停止和删除所有容器、网络：
+
+```shell
+[root@localhost ~]# docker container stop alpine1 alpine2 alpine3 alpine4
+[root@localhost ~]# docker container rm alpine1 alpine2 alpine3 alpine4
+[root@localhost ~]# docker network rm alpine-net
+```
+
+
 
 
 
