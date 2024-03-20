@@ -4,11 +4,11 @@ outline: deep
 
 ## Docker存储
 
-启动容器之后，所有文件名默认都存在出容器中，那么我们则需要注意一下几点：
+启动容器之后，所有文件默认都存在于容器中，那么我们则需要注意一下几点：
 
 - 如果容器被移除了，那么文件也将随之消失，在**容器外**的其他进程如果想获取**容器内**的文件，也比较困难
 - 一个可写的容器层是紧密地与主机（也称`宿主机`）绑在一起，我们也很难把容器内的数据移动到其他地方
-- 将数据写入容器时，我们需要`store driver` 来管理，它是基于 Linux 内核的一个文件系统的抽象实现，不过这个实现却会造成一些性能损耗
+- 将数据写入容器时，我们需要`store driver` （存储驱动软件）来管理，它是基于 Linux 内核的一个文件系统的抽象实现，不过这个实现却会造成一些性能损耗
 
 为了解决 Docker 在宿主机文件存储问题，Docker提供了两种方式：有两种方式 `volumes` 和 `bind mounts`.
 
@@ -16,13 +16,13 @@ outline: deep
 借助官网一张图来看看这两种数据存储方式的区别：
 ![20240121090140](https://cdn.jsdelivr.net/gh/Github-Stephen/blogPic/springboot/20240121090140.png)
 
-`Volumes 模式`： 实际存储在`宿主机`的文件系统中，只不过这个（文件）区域是被 Docker 所管理，我们通常可以在`/var/lib/docker/volumes/`（下称“Docker存储区”） 里查看得到;
+`Volumes`模式： 实际存储在`宿主机`的文件系统中，只不过这个（文件）区域是被 Docker 所管理，我们通常可以在`/var/lib/docker/volumes/`（下称“Docker存储区”） 里查看得到;
 
-`Bind mounts` 模式：可以存储在`宿主机`的任意位置， 它或许是一个重要文件，或者是一个目录。`宿主机`上的非 Docker 进程或者是在容器内可随意修改；
+`Bind mounts` 模式：可以存储在`宿主机`（Docker 进程所在的主机）的任意位置， 它或许是一个重要文件，或者是一个目录。`宿主机`上的非 Docker 进程或者是在容器内可随意修改；
 
 `temfs` mount模式： 只存储在`宿主机`的内存中，并且永远不会持久化到文件系统中；
 
-清晰地了解每个模式的作用，才能在工作中运用自如，以上的模式，我们可以利用`-v`或者`--volume`来标识，不过这两个命令有轻微的区别，对于`tmpfs`模式，可以使用`--tmpfs`标识。不过通常使用`--mount`标识来挂载容器与服务之间的内容，这样更清晰和容易记忆。
+清晰地了解每个模式的作用，才能在工作中运用自如，以上的模式，我们可以利用`-v`或者`--volume`来标识，不过这两个命令有轻微的区别，对于`tmpfs`模式，可以使用`--tmpfs`标识。不过通常使用`--mount`标识来挂载容器与宿主机之间的内容，这样更清晰和容易记忆。
 
 
 
@@ -32,7 +32,7 @@ outline: deep
 
 &emsp;&emsp;当我们创建一个`volume`时，实际这个`volume`是存储在Docker所在的宿主机上一个目录中，上一小节已经讲过（Docker存储区）。当我们把这个`volume`挂载到容器中时，它的运作则有点像`bind mounts`，区别在于，`volume`是由 Docker 管理并独立于宿主机（通常部署的是 Linux 系统）的核心功能.
 
-&emsp;&emsp;一个`volume`可以同时挂载到多个容器中。匿名的`volume`会获得一个随机且唯一的名称，除非你在创建容器时，主动使用`--rm`命令，否则`volume`将会一直存在与 Docker 所管理的区域中（Docker存储区）。
+&emsp;&emsp;一个`volume`可以同时挂载到多个容器中。匿名的`volume`会获得一个随机且唯一的名称。如果您想删除`volume`，需要显式使用`--rm`命令，否则`volume`将会一直存在与 Docker 所管理的区域中（Docker存储区）。
 
 &emsp;&emsp;`volume`也支持`volume drivers`，这样我们可以把文件存储在远程服务器或者云存储等其他介质，这个后续我们在示例中再介绍。
 
@@ -40,11 +40,10 @@ outline: deep
 
 ### Bind mounts
 
-&emsp;&emsp;`Bind mounts`相对于`volume`有一些限制。当你使用`bind mount`时，实际就是将`宿主机`的某个文件、目录挂载进容器而已，容器是指向了`宿主机`的完整路径，如 `/home/app/myfile:/docker/myfile`（宿主机路径：容器内路径）。`bind mount`在挂载时，Docker 所在区域 （Docker存储区）无需创建该目录，后台进程将会自动创建（相当于在 Linux 系统执行了 `mkdir -p /home/app`）。`Bind mounts`运行速度快，但是其依赖`宿主机`特定的文件目录结构。建议在开发新的容器程序时，优先使用`named volumes`。而且我们也无法通过`Docker CLI commonds`来管理`bind mounts`所操作的目录。
+&emsp;&emsp;`Bind mounts`相对于`volume`有一些限制。当你使用`bind mount`时，实际就是将`宿主机`的某个文件、目录挂载进容器而已，容器是指向了`宿主机`的完整路径，如 `/home/app/myfile:/docker/myfile`（宿主机路径：容器内路径）。`bind mount`在挂载时，Docker 所在区域 （Docker存储区）无需创建该目录，后台进程将会自动创建（相当于在 Linux 系统执行了 `mkdir -p /home/app`）。`Bind mounts`运行速度快，但是其依赖`宿主机`特定的文件目录结构。建议在开发新的容器程序时，优先使用`named volumes`（具名 `volume`）。而且我们也无法通过`Docker CLI commonds`来管理`bind mounts`所操作的目录。
 
 
 &emsp;&emsp;注意：`Bind mounts`默认具有`宿主机`的写入权限！ 这可能会带来一些安全的问题，因为容器可直接操作`宿主机`的文件系统（创建、更改、删除），或者`宿主机`上的其他非 Docker 进程，也可以破坏被`bind mount`的文件、目录。
-
 
 
 以上介绍了一些 Docker 的存储方式，那我们可以来看看这些存储方式的最佳的应用场景：
