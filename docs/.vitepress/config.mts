@@ -17,6 +17,7 @@ export default defineConfig({
           { text: '基础知识', link: '/Docker' },
           { text: '持久化', link: '/Persistence' },
           { text: '网络', link: '/Networking' },
+          { text: 'Docker构建', link: '/DockerBuild' },
         ]
       }
     ],
