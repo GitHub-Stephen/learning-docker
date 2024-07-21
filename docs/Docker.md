@@ -185,7 +185,13 @@ docker-compose-plugin.aarch64           2.10.2-3.el9            docker-ce-stable
 sudo yum install docker-ce-3:20.10.24-3.el9 docker-ce-cli-1:20.10.24-3.el9 containerd.io docker-compose-plugin-2.19.1-1.el9
 ```
 
+鉴于访问docker官网速度比较慢，所以我们还可以使用github的方式，直接下载二进制文件。
 
+- 通过github下载安装包离线安装
+
+```shell
+curl -SL https://github.com/docker/compose/releases/download/v2.25.0/docker-compose-linux-aarch64 -o /usr/local/lib/docker/cli-plugins
+```
 
 - 安装目录概览：
 
