@@ -495,3 +495,21 @@ latest: digest: sha256:efebf0f7aee69450f99deafe11121afa720abed733943e50581a9dc75
 {"repositories":["newhello"]}
 ```
 我们可以看到私有仓库，已经有一个`newhello`的镜像了.
+
+
+## Docker常用命令
+
+- 将当前docker实例中的镜像打包成tar
+
+```shell
+docker save -o /path/to/imageName.tar imageId
+```
+将`imageId`替换成当前docker实例（本地）镜像 Id 即可
+
+<br/>
+
+- 将打包的镜像导入到docker实例中
+```shell
+docker load -i /path/to/imageName.tar
+```
+

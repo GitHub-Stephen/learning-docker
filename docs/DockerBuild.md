@@ -165,15 +165,7 @@ CMD ["flask", "run", "--host", "0.0.0.0", "--port", "8000"]
 
 <br/>
 
-##### Dockerfile语法
-第一行中我们看到 `# syntax=docker/dockerfile:1`，这个语法主要设置 Dockerfile 的语法解析器，该注释必须在 Dockerfile的首行，并且`#`号后紧跟一个空格。
-
-<br/>
-
-##### 基础镜像
-> Base image
-
-`FROM` 指令则是设置你的基础镜像为 Ubuntu 为 22.04。在此指令后面的所有指令，都是运行在 Ubuntu 的环境下。这种标记实际是 `name:tag` ，也就是镜像名：版本。 在 DockerHub 上
+每一个语法的解释可以查看 [dockerFile](https://docs.docker.com/build/concepts/dockerfile/#dockerfile)
 
 
 
